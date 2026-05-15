@@ -1,0 +1,46 @@
+[
+  {
+    "id": 1,
+    "codigo": "FR-001",
+    "nombre": "Pastillas de Freno Delanteras",
+    "categoria": "Frenos",
+    "marca": "Ford",
+    "modelo": "Fiesta",
+    "anio": "2015-2019",
+    "imagen": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&q=80&w=400",
+    "descripcion": "Pastillas de freno de alta durabilidad, compuesto cerámico."
+  },
+  {
+    "id": 2,
+    "codigo": "FR-002",
+    "nombre": "Disco de Freno Ventilado",
+    "categoria": "Frenos",
+    "marca": "Volkswagen",
+    "modelo": "Gol Trend",
+    "anio": "2012-2020",
+    "imagen": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&q=80&w=400",
+    "descripcion": "Disco de freno ventilado delantero, excelente disipación de calor."
+  },
+  {
+    "id": 3,
+    "codigo": "HI-050",
+    "nombre": "Flexible de Freno Delantero",
+    "categoria": "Hidráulica",
+    "marca": "Chevrolet",
+    "modelo": "Onix",
+    "anio": "2016-2021",
+    "imagen": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&q=80&w=400",
+    "descripcion": "Manguera flexible de alta presión para líquido de frenos."
+  },
+  {
+    "id": 4,
+    "codigo": "FR-003",
+    "nombre": "Pastillas de Freno Traseras",
+    "categoria": "Frenos",
+    "marca": "Volkswagen",
+    "modelo": "Bora",
+    "anio": "2007-2014",
+    "imagen": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&q=80&w=400",
+    "descripcion": "Pastillas de freno traseras compuestas estándar OEM."
+  }
+]

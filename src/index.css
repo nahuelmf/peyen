@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  /* Registramos los colores oficiales del Manual de Marca de Peyen */
+  --color-peyen-blue: #12243D;
+  --color-peyen-blue-dark: #0E1D34;
+  --color-peyen-red: #B72821;
+  --color-peyen-gray: #F2EDEB;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-peyen-gray);
+  color: var(--color-peyen-blue);
+}
