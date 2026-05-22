@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react';
 import { ProductContext } from '../context/ProductContext';
-import { PlusCircle, Trash2, Image, KeyRound, Pencil, Save, XCircle } from 'lucide-react';
+import { PlusCircle, Trash2, Image, KeyRound, Pencil, Save, XCircle, Link2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Admin() {
@@ -17,10 +17,14 @@ export default function Admin() {
   const [marca, setMarca] = useState('');
   const [modelo, setModelo] = useState('');
   const [anio, setAnio] = useState('');
+  
+  // Estados nuevos para la gestión dual de imágenes (Local vs Enlace)
+  const [pestanaImagen, setPestanaImagen] = useState('archivo'); // 'archivo' o 'enlace'
   const [imagenBase64, setImagenBase64] = useState('');
+  const [imagenUrl, setImagenUrl] = useState('');
   const [errorImagen, setErrorImagen] = useState('');
 
-  // Cargar datos en el formulario para editar
+  // Cargar datos en el formulario para editar y detectar el origen de la imagen
   const iniciarEdicion = (producto) => {
     setEditandoId(producto.id);
     setCodigo(producto.codigo);
@@ -29,11 +33,22 @@ export default function Admin() {
     setMarca(producto.marca);
     setModelo(producto.modelo);
     setAnio(producto.anio);
-    setImagenBase64(producto.imagen);
+    
+    // Si la imagen arranca con data:image, es un archivo local convertido a Base64
+    if (producto.imagen.startsWith('data:image')) {
+      setImagenBase64(producto.imagen);
+      setImagenUrl('');
+      setPestanaImagen('archivo');
+    } else {
+      // De lo contrario, asumimos que es un enlace URL externo
+      setImagenUrl(producto.imagen);
+      setImagenBase64('');
+      setPestanaImagen('enlace');
+    }
     setErrorImagen('');
   };
 
-  // Cancelar edición y limpiar
+  // Cancelar edición y limpiar todo el formulario de forma segura
   const cancelarEdicion = () => {
     setEditandoId(null);
     setCodigo('');
@@ -43,9 +58,11 @@ export default function Admin() {
     setModelo('');
     setAnio('');
     setImagenBase64('');
+    setImagenUrl('');
     setErrorImagen('');
   };
 
+  // Procesador de imágenes locales a Base64
   const handleImageChange = (e) => {
     const archivo = e.target.files[0];
     if (!archivo) return;
@@ -65,7 +82,11 @@ export default function Admin() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const imagenFinal = imagenBase64 || "/logo-peyen.png";
+    
+    // Determina qué imagen usar según la pestaña activa en ese momento
+    const imagenFinal = pestanaImagen === 'enlace' 
+      ? (imagenUrl.trim() || "/logo-peyen.png") 
+      : (imagenBase64 || "/logo-peyen.png");
 
     const datosProducto = {
       codigo,
@@ -78,11 +99,9 @@ export default function Admin() {
     };
 
     if (editandoId) {
-      // Modo Edición
       actualizarProducto(editandoId, datosProducto);
       alert('¡Repuesto modificado con éxito!');
     } else {
-      // Modo Alta
       agregarProducto(datosProducto);
       alert('¡Repuesto publicado con éxito!');
     }
@@ -167,27 +186,72 @@ export default function Admin() {
               </div>
             </div>
 
-            {/* SECTOR DE IMAGEN */}
-            <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 bg-slate-50/50 flex flex-col items-center justify-center text-center">
-              {imagenBase64 ? (
-                <div className="relative w-24 h-24 rounded-lg overflow-hidden border bg-white group">
-                  <img src={imagenBase64} alt="Vista previa" className="w-full h-full object-cover" />
-                  <label className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[9px] font-bold transition-opacity cursor-pointer">
-                    <Image size={14} className="mb-0.5" />
-                    Cambiar foto
-                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                  </label>
-                </div>
-              ) : (
-                <label className="cursor-pointer flex flex-col items-center justify-center space-y-1 group">
-                  <div className="p-2 bg-white rounded-lg border border-slate-200 text-slate-400 group-hover:text-peyen-red transition-colors">
-                    <Image size={20} />
+            {/* SECTOR INTEGRADO: SELECTOR DUAL DE IMÁGENES */}
+            <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+              <div className="flex border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider">
+                <button
+                  type="button"
+                  onClick={() => setPestanaImagen('archivo')}
+                  className={`flex-1 pb-2 text-center border-b-2 transition-all cursor-pointer ${pestanaImagen === 'archivo' ? 'border-peyen-red text-peyen-blue' : 'border-transparent text-slate-400'}`}
+                >
+                  Subir Archivo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPestanaImagen('enlace')}
+                  className={`flex-1 pb-2 text-center border-b-2 transition-all cursor-pointer ${pestanaImagen === 'enlace' ? 'border-peyen-red text-peyen-blue' : 'border-transparent text-slate-400'}`}
+                >
+                  Pegar Enlace
+                </button>
+              </div>
+
+              <div className="flex flex-col items-center justify-center text-center pt-1">
+                {pestanaImagen === 'archivo' ? (
+                  imagenBase64 ? (
+                    <div className="relative w-24 h-24 rounded-lg overflow-hidden border bg-white group">
+                      <img src={imagenBase64} alt="Vista previa" className="w-full h-full object-cover" />
+                      <label className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[9px] font-bold transition-opacity cursor-pointer">
+                        <Image size={14} className="mb-0.5" />
+                        Cambiar foto
+                        <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                      </label>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer flex flex-col items-center justify-center space-y-1 group py-3">
+                      <div className="p-2 bg-white rounded-lg border border-slate-200 text-slate-400 group-hover:text-peyen-red transition-colors">
+                        <Image size={20} />
+                      </div>
+                      <span className="text-xs font-bold text-peyen-blue group-hover:underline">Seleccionar Foto Local</span>
+                      <span className="text-[9px] text-slate-400">PNG o JPG hasta 2MB</span>
+                      <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                    </label>
+                  )
+                ) : (
+                  <div className="w-full space-y-3 py-1">
+                    <div className="relative flex items-center">
+                      <Link2 size={14} className="absolute left-2.5 text-slate-400" />
+                      <input
+                        type="url"
+                        placeholder="https://ejemplo.com/imagen.jpg"
+                        value={imagenUrl}
+                        onChange={(e) => setImagenUrl(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-2 text-xs outline-hidden focus:border-peyen-blue"
+                      />
+                    </div>
+                    {imagenUrl.trim() && (
+                      <div className="w-24 h-24 rounded-lg overflow-hidden border bg-white mx-auto">
+                        <img 
+                          src={imagenUrl} 
+                          alt="Vista previa URL" 
+                          className="w-full h-full object-cover" 
+                          onError={(e) => { e.target.src = "/logo-peyen.png"; }} 
+                        />
+                      </div>
+                    )}
                   </div>
-                  <span className="text-xs font-bold text-peyen-blue group-hover:underline">Subir imagen</span>
-                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                </label>
-              )}
-              {errorImagen && <p className="text-[10px] text-peyen-red font-bold mt-2">{errorImagen}</p>}
+                )}
+                {errorImagen && <p className="text-[10px] text-peyen-red font-bold mt-2">{errorImagen}</p>}
+              </div>
             </div>
 
             <button type="submit" className={`w-full text-white font-black uppercase tracking-wider py-3 rounded-xl text-xs cursor-pointer transition-colors shadow-sm flex items-center justify-center gap-2 ${editandoId ? 'bg-peyen-red hover:bg-red-700' : 'bg-peyen-blue hover:bg-peyen-blue-dark'}`}>
@@ -208,7 +272,7 @@ export default function Admin() {
               <div key={p.id} className={`flex items-center justify-between py-2.5 px-2 gap-4 rounded-xl transition-all ${editandoId === p.id ? 'bg-red-50/40 border border-peyen-red/20' : 'border border-transparent'}`}>
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-12 h-12 bg-slate-50 border rounded-lg overflow-hidden shrink-0">
-                    <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
+                    <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" onError={(e) => { e.target.src = "/logo-peyen.png"; }} />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
