@@ -3,7 +3,7 @@ import { Search, X, MessageSquareText, CornerDownLeft } from 'lucide-react';
 
 export default function SearchModal({ isOpen, onClose, productos, busqueda, setBusqueda }) {
   const inputRef = useRef(null);
-  const numeroWhatsapp = "5491123456789"; // Tu número comercial real
+  const numeroWhatsapp = "5491149351070"; // Tu número comercial real
 
   // Auto-foco al abrir e interactividad con el teclado (Esc para cerrar)
   useEffect(() => {
