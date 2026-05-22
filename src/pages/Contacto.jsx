@@ -62,8 +62,8 @@ export default function Contacto() {
             <div className="flex items-start gap-3">
               <MapPin size={18} className="text-peyen-red shrink-0 mt-0.5" />
               <div>
-                <p className="font-bold uppercase text-xs text-slate-400">Planta Industrial</p>
-                <p className="text-slate-200 mt-0.5">Buenos Aires, Argentina</p>
+                <p className="font-bold uppercase text-xs text-slate-400">Atención al público</p>
+                <p className="text-slate-200 mt-0.5">PICHINCHA 934  TEMPERLEY</p>
               </div>
             </div>
 
@@ -71,7 +71,7 @@ export default function Contacto() {
               <Mail size={18} className="text-peyen-red shrink-0 mt-0.5" />
               <div>
                 <p className="font-bold uppercase text-xs text-slate-400">Correo Electrónico</p>
-                <p className="text-slate-200 mt-0.5">info@peyenrepuestos.com.ar</p>
+                <p className="text-slate-200 mt-0.5">info@peyen.net</p>
               </div>
             </div>
 
@@ -79,7 +79,7 @@ export default function Contacto() {
               <Phone size={18} className="text-peyen-red shrink-0 mt-0.5" />
               <div>
                 <p className="font-bold uppercase text-xs text-slate-400">Teléfono / WhatsApp</p>
-                <p className="text-slate-200 mt-0.5">+54 (11) 1234-5678</p>
+                <p className="text-slate-200 mt-0.5">+54 11 4935 1070</p>
               </div>
             </div>
           </div>

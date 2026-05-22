@@ -6,6 +6,7 @@ import Catalogo from './pages/Catalogo';
 import Contacto from './pages/Contacto';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
+import BotonWhatsApp from './components/BotonWhatsApp';
 
 export default function App() {
   return (
@@ -15,6 +16,8 @@ export default function App() {
           
           {/* Barra de navegación superior fija */}
           <Navbar />
+
+          <BotonWhatsApp />
 
           {/* Contenedor dinámico de las páginas */}
           <main className="flex-grow container mx-auto px-4 py-8">

@@ -1,7 +1,7 @@
 import { MessageSquareText } from 'lucide-react';
 
 export default function ProductCard({ producto }) {
-  const numeroWhatsapp = "5491123456789"; // Reemplazar por tu número real
+  const numeroWhatsapp = "5491149351070"; // Reemplazar por tu número real
 
   const mensajePredeterminado = encodeURIComponent(
     `Hola PEYEN! Estoy interesado en el siguiente repuesto:\n\n` +
