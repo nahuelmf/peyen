@@ -7,6 +7,8 @@ import Contacto from './pages/Contacto';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
 import BotonWhatsApp from './components/BotonWhatsApp';
+import LoginClientes from './pages/LoginClientes'; // Importación obligatoria
+
 
 export default function App() {
   return (
@@ -27,6 +29,9 @@ export default function App() {
               <Route path="/contacto" element={<Contacto />} />
               <Route path="/login" element={<Login />} />
               <Route path="/admin" element={<Admin />} />
+              {/* RUTA ÚNICA DE ACCESO */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/login-clientes" element={<LoginClientes />} /> {/* Enlace de entrada */}
             </Routes>
           </main>
 
