@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShieldCheck, Truck, Wrench } from 'lucide-react';
+import CategoriasInicio from '../components/CategoriasInicio';
 
 export default function Home() {
   return (
@@ -42,6 +43,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* AQUÍ VA EL NUEVO COMPONENTE */}
+      <CategoriasInicio />
 
       {/* SECCIÓN CARACTERÍSTICAS (Las tarjetitas de abajo) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

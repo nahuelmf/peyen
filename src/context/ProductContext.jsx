@@ -1,23 +1,11 @@
-import { createContext, useState } from 'react';
-
-
+import { createContext, useState, useEffect } from 'react';
+import { db } from "../firebase"; 
+import { collection, addDoc, getDocs, query, where } from "firebase/firestore"; // Asegúrate de importar esto
 export const ProductContext = createContext();
 
 export function ProductProvider({ children }) {
-  // Estado de catálogo de repuestos
-  const [productos, setProductos] = useState([
-    {
-      id: "100-init",
-      codigo: "100",
-      nombre: "PROTECTOR CUBETA BOMBA 3/4'' - FIAT 600",
-      categoria: "CHAJA",
-      marca: "FIAT",
-      modelo: "Universal",
-      anio: "Universal",
-      imagen: "/logo-peyen.png",
-      precioBase: 12500
-    }
-  ]);
+  // Estado de catálogo de repuestos (ahora inicia vacío, se llena con Firebase)
+  const [productos, setProductos] = useState([]);
 
   // Estado de Clientes Mayoristas
   const [usuarios, setUsuarios] = useState([
@@ -25,22 +13,65 @@ export function ProductProvider({ children }) {
     { id: "u2", nombreEmpresa: "Repuestos Calzada", cuit: "27-98765432-1", usuario: "calzada", clave: "123", descuento: 0.25 }
   ]);
 
-  // Almacena el usuario/admin activo en la pestaña (null = público general)
-  const [usuarioLogueado, setUsuarioLogueado] = useState(null); 
-
-  // ESTADO DEL CARRITO DE COMPRAS
+  const [usuarioLogueado, setUsuarioLogueado] = useState(null);
   const [carrito, setCarrito] = useState([]);
 
-  // --- MÉTODOS DE PRODUCTOS ---
-  const agregarProducto = (nuevoProducto) => {
-    setProductos((prevProductos) => {
-      const yaExiste = prevProductos.some(
-        (p) => p.codigo.toLowerCase() === nuevoProducto.codigo.toLowerCase()
-      );
-      if (yaExiste) return prevProductos;
-      return [...prevProductos, { ...nuevoProducto, precioBase: nuevoProducto.precioBase || 15000 }];
-    });
+  // --- EFECTO: Cargar productos desde Firebase al iniciar ---
+useEffect(() => {
+  const cargarProductosDesdeFirebase = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "productos"));
+      
+      const productosFirebase = querySnapshot.docs.map(doc => ({
+        id: doc.id, // Este es el ID único de Firebase
+        ...doc.data()
+      }));
+
+      // Ordenar alfabéticamente/numéricamente por código
+      productosFirebase.sort((a, b) => {
+        return String(a.codigo).localeCompare(String(b.codigo), undefined, { 
+          numeric: true, 
+          sensitivity: 'base' 
+        });
+      });
+
+      setProductos(productosFirebase);
+    } catch (error) {
+      console.error("Error al cargar productos: ", error);
+    }
   };
+  cargarProductosDesdeFirebase();
+}, []);
+
+  // --- MÉTODOS DE PRODUCTOS ---
+const agregarProducto = async (nuevoProducto) => {
+  try {
+    // 1. Crear una referencia a la colección
+    const productosRef = collection(db, "productos");
+
+    // 2. Crear una consulta para buscar si el código ya existe
+    const q = query(productosRef, where("codigo", "==", nuevoProducto.codigo));
+    const querySnapshot = await getDocs(q);
+
+    // 3. Si querySnapshot.empty es falso, significa que ya existe
+    if (!querySnapshot.empty) {
+      alert("Error: Ya existe un producto con este código.");
+      return; // Cortamos la ejecución aquí
+    }
+
+    // 4. Si no existe, procedemos a guardarlo
+    const docRef = await addDoc(productosRef, {
+      ...nuevoProducto,
+      precioBase: nuevoProducto.precioBase || 15000
+    });
+
+    setProductos((prev) => [...prev, { ...nuevoProducto, id: docRef.id }]);
+    console.log("Producto guardado exitosamente");
+
+  } catch (error) {
+    console.error("Error al guardar producto:", error);
+  }
+};
 
   const actualizarProducto = (id, productoActualizado) => {
     setProductos((prevProductos) =>
@@ -61,12 +92,12 @@ export function ProductProvider({ children }) {
     setUsuarios((prevUsuarios) => prevUsuarios.filter((u) => u.id !== id));
   };
 
-const actualizarUsuario = (id, datosActualizados) => {
+  const actualizarUsuario = (id, datosActualizados) => {
     setUsuarios((prevUsuarios) =>
       prevUsuarios.map((u) => (u.id === id ? { ...u, ...datosActualizados } : u))
     );
-    console.log("Usuario actualizado localmente con éxito");
   };
+
   // --- MÉTODOS DEL CARRITO ---
   const agregarAlCarrito = (producto, cantidad = 1) => {
     setCarrito((prevCarrito) => {

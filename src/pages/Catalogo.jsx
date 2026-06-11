@@ -1,12 +1,11 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useMemo } from 'react';
 import { ProductContext } from '../context/ProductContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   ShoppingCart, LogIn, LogOut, Trash2, Plus, Minus, X, FileDown, Lock, Pencil, ChevronLeft, ChevronRight, Eye 
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import emailjs from '@emailjs/browser';
-import { storage } from '../firebase'; 
+import { storage } from '../firebase'; // Asegúrate de que la ruta sea correcta
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function Catalogo() {
@@ -16,13 +15,22 @@ export default function Catalogo() {
   } = useContext(ProductContext);
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  // Estados
   const [busqueda, setBusqueda] = useState('');
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const [imagenModal, setImagenModal] = useState(null);
   const [paginaActual, setPaginaActual] = useState(1);
   const [enviandoEmail, setEnviandoEmail] = useState(false);
   
+const handleBusquedaChange = (e) => {
+  setBusqueda(e.target.value);
+  setPaginaActual(1);
+};
+
   const productosPorPagina = 12;
+  const categoriaFiltro = searchParams.get('categoria');
 
   // Cálculos de negocio
   const esAdmin = usuarioLogueado?.role === 'admin';
@@ -32,87 +40,73 @@ export default function Catalogo() {
   const subtotalBase = carrito.reduce((sum, item) => sum + ((item.precioBase || 0) * item.cantidad), 0);
   const totalConDescuento = subtotalBase * factorDescuento;
 
-  const handleBusquedaChange = (e) => {
-    setBusqueda(e.target.value);
-    setPaginaActual(1);
-  };
+  // Lógica de Filtrado (Combinada)
+  const productosFiltrados = useMemo(() => {
+    return productos.filter(p => {
+      const coincideBusqueda = p.nombre.toLowerCase().includes(busqueda.toLowerCase()) || 
+                              p.codigo.toLowerCase().includes(busqueda.toLowerCase());
+      const coincideCategoria = categoriaFiltro 
+        ? p.categoria?.toLowerCase() === categoriaFiltro.toLowerCase() 
+        : true;
+      return coincideBusqueda && coincideCategoria;
+    });
+  }, [productos, busqueda, categoriaFiltro]);
 
-  const productosFiltrados = productos.filter(p =>
-    p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-    p.codigo.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  // Lógica de Paginación
+  const totalPaginas = Math.ceil(productosFiltrados.length / productosPorPagina);
+  const indiceUltimoProducto = paginaActual * productosPorPagina;
+  const indicePrimerProducto = indiceUltimoProducto - productosPorPagina;
+  const productosPaginaActual = productosFiltrados.slice(indicePrimerProducto, indiceUltimoProducto);
 
   const obtenerPáginasVisibles = () => {
     const paginas = [];
-    const totalPaginas = Math.ceil(productosFiltrados.length / productosPorPagina);
     const limiteVecinos = 1;
     if (totalPaginas <= 7) {
       for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
     } else {
       paginas.push(1);
-      if (paginaActual > limiteVecinos + 3) paginas.push('...');
+      if (paginaActual > 4) paginas.push('...');
       const inicio = Math.max(2, paginaActual - limiteVecinos);
       const fin = Math.min(totalPaginas - 1, paginaActual + limiteVecinos);
       for (let i = inicio; i <= fin; i++) paginas.push(i);
-      if (paginaActual < totalPaginas - limiteVecinos - 2) paginas.push('...');
+      if (paginaActual < totalPaginas - 3) paginas.push('...');
       paginas.push(totalPaginas);
     }
     return paginas;
   };
 
-  const indiceUltimoProducto = paginaActual * productosPorPagina;
-  const indicePrimerProducto = indiceUltimoProducto - productosPorPagina;
-  const productosPaginaActual = productosFiltrados.slice(indicePrimerProducto, indiceUltimoProducto);
-  const totalPaginas = Math.ceil(productosFiltrados.length / productosPorPagina);
-
   // --- LÓGICA DE PEDIDO ---
-const handleFinalizarPedido = async () => {
-  if (carrito.length === 0) return;
-  setEnviandoEmail(true);
+  const handleFinalizarPedido = async () => {
+    if (carrito.length === 0) return;
+    setEnviandoEmail(true);
+    try {
+      const fechaActual = new Date().toLocaleDateString('es-AR');
+      const contenidoCSV = carrito.map(item => 
+        `${usuarioLogueado?.codigoCliente || 'S/C'},${fechaActual},${item.codigo},${item.nombre},${item.cantidad}`
+      ).join('\n'); 
 
-  try {
-    const fechaActual = new Date().toLocaleDateString('es-AR').replace(/\//g, '-');
-    
-// 1. Crear el contenido del archivo como una cadena de texto (CSV)
-    // Orden: Código Cliente, Fecha, Código Producto, Descripción, Cantidad
-    const contenidoCSV = carrito.map(item => {
-      // Ajustamos el orden aquí:
-      return `${usuarioLogueado?.codigoCliente || 'S/C'},${fechaActual},${item.codigo},${item.nombre},${item.cantidad}`;
-    }).join('\n'); 
+      const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });
+      const nombreArchivo = `pedidos/Cli_${usuarioLogueado?.codigoCliente || 'sin_id'}_${Date.now()}.csv`;
+      const storageRef = ref(storage, nombreArchivo);
+      const snapshot = await uploadBytes(storageRef, blob);
+      const linkDescarga = await getDownloadURL(snapshot.ref);
 
-    // 2. Crear el Blob con tipo texto/csv
-    const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });
-
-    // 3. Subir a Firebase
-    // Cambiamos la extensión a .csv para que se abra directamente como texto
-    const nombreArchivo = `pedidos/Cli_${usuarioLogueado?.codigoCliente || 'sin_id'}_${Date.now()}.csv`;
-    const storageRef = ref(storage, nombreArchivo);
-    const snapshot = await uploadBytes(storageRef, blob);
-    const linkDescarga = await getDownloadURL(snapshot.ref);
-
-    // ... (el resto de tu código de EmailJS se mantiene igual)
-    await emailjs.send(
-      'service_wi2zsn8',
-      'template_h31c4cs',
-      {
+      await emailjs.send('service_wi2zsn8', 'template_h31c4cs', {
         empresa: usuarioLogueado?.nombreEmpresa || 'Cliente',
         codigo_cliente: usuarioLogueado?.codigoCliente || 'N/A',
-        message: "Se ha recibido un nuevo pedido.",
         link_descarga: linkDescarga 
-      },
-      'uDn8BDDQoU4wkBGIT'
-    );
+      }, 'uDn8BDDQoU4wkBGIT');
 
-    alert('¡Pedido enviado con éxito!');
-    vaciarCarrito();
-    setCarritoAbierto(false);
-  } catch (err) {
-    console.error("Error:", err);
-    alert('Error al enviar el pedido.');
-  } finally {
-    setEnviandoEmail(false);
-  }
-};
+      alert('¡Pedido enviado con éxito!');
+      vaciarCarrito();
+      setCarritoAbierto(false);
+    } catch (err) {
+      console.error(err);
+      alert('Error al enviar el pedido.');
+    } finally {
+      setEnviandoEmail(false);
+    }
+  };
   return (
     <div className="bg-slate-50 min-h-screen text-slate-800 font-sans relative">
       <nav className="bg-[#111827] text-white border-b border-slate-800 sticky top-0 z-40 shadow-md">
