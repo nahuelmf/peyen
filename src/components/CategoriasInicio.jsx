@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 const categorias = [
   { nombre: "CILINDROS BOMBAS", imagen: "https://acdn-us.mitiendanube.com/stores/006/161/290/products/mla1371062370_3-1781cbf6392827c5ca17497012229397-1024-1024.webp", ruta: "CILINDROS BOMBAS" },
   { nombre: "REPARACIONES", imagen: "https://image.made-in-china.com/202f0j00gQBUvMycANuo/Kit-Repair-Brake-Drum-Repair-Kits.webp", ruta: "reparaciones" },
-  { nombre: "CALIPER", imagen: "https://www.nitro.pe/images/2017/julio/caliper_caliper.jpg", ruta: "caliper" },
+  { nombre: "CALIPER", imagen: "https://www.nitro.pe/images/2017/julio/caliper_caliper.jpg", ruta: "despiece" },
   { nombre: "SERVOS", imagen: "https://somosdakar.com/wp-content/uploads/2022/11/servofreno.png", ruta: "servos" },
   { nombre: "CONEXIONES", imagen: "https://image.made-in-china.com/318f0j00ntaYMSsyhVuf/3-12-2-mp4.webp", ruta: "CONEXIONES" },
   { nombre: "CHAJA", imagen: "https://rafrenfrenos.com.ar/assets/archivos/recortadas/chajafrenos_5ea93619c0_es.webp", ruta: "CHAJA" },
